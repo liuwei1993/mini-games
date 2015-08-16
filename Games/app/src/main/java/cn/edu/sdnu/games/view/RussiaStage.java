@@ -10,8 +10,9 @@ import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.atguigu.lw.russiabox.model.Model;
-import com.atguigu.lw.russiabox.utils.L;
+import cn.edu.sdnu.games.bean.Model;
+import cn.edu.sdnu.games.utils.L;
+
 
 /**
  * 用于展示俄罗斯游戏的舞台
@@ -271,7 +272,7 @@ public class RussiaStage extends View {
                 modelForDown.copy(modelForShow);
                 modelForDown.downOneStep();
                 if(checkCanChange(modelForDown)){
-                    L.d(getClass(),"check","检测可以向下移动"+modelForDown.items[0]);
+                    L.d(getClass(), "check", "检测可以向下移动" + modelForDown.items[0]);
                     modelForShow.downOneStep();
                 }else{
                     L.d(getClass(),"check","检测   不  可以向下移动"+modelForDown.items[0]);

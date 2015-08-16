@@ -9,7 +9,7 @@
     android:background="@color/material_blue_grey_800"
     tools:context=".MainActivity">
 
-    <com.atguigu.lw.russiabox.view.RussiaStage
+    <cn.edu.sdnu.games.view.RussiaStage
         android:id="@+id/rs"
         android:layout_width="300dp"
         android:layout_height="500dp"
