@@ -11,6 +11,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import cn.edu.sdnu.games.bean.Model;
+import cn.edu.sdnu.games.controller.Controller;
 import cn.edu.sdnu.games.utils.L;
 
 
@@ -20,9 +21,10 @@ import cn.edu.sdnu.games.utils.L;
  */
 public class RussiaStage extends View {
 
-    public final static int WIDTH_ITEM_COUNTS = 12;
-    public final static int HEIGHT_ITEM_COUNTS = 20;
-
+    public final static int WIDTH_ITEM_COUNTS = 10;
+    public final static int HEIGHT_ITEM_COUNTS = 15;
+    private final static long NORMAL_DELAY_TIME = 500;
+    private final static long QUICKLY_DELAY_TIME = 50;
 
 
     private boolean[][] chessboard;//这是一个矩阵，true代表有方块，false代表没有
@@ -32,20 +34,28 @@ public class RussiaStage extends View {
     private float viewWidth;
     private float itemWidth;
     private float itemHeight;
-    private boolean running;
     private boolean isOver;//游戏是否结束
     private int mainScore;
 
-    private Thread downThread = new DownThread();
+    private boolean running;//用来控制暂停
+    private long delayTime = NORMAL_DELAY_TIME;//初始化单位时间为半秒，快速下滑改为100毫秒
+    private DownThread downThread;//守护线程
+    private Controller controller;
 
     private final Model modelForShow = new Model();//专门用来显示的model
-    private final Model modelForDown = new Model();//down线程用来碰撞测试的model
-    private final Model modelForHorizontal = new Model();//左右移动碰撞测试使用的
+    private final Model modelForCheck = new Model();//用于碰撞测试的model
     {
-        chessboard = new boolean[HEIGHT_ITEM_COUNTS][WIDTH_ITEM_COUNTS];
         paint = new Paint();
         paint.setAntiAlias(true);
+        controller = new Controller(this);
+        init();
+        downThread = new DownThread();
+        downThread.start();
+    }
+    public void init(){
+        chessboard = new boolean[HEIGHT_ITEM_COUNTS][WIDTH_ITEM_COUNTS];
         modelForShow.init(WIDTH_ITEM_COUNTS);
+        mainScore = 0;
         invalidate();//重绘
     }
 
@@ -90,46 +100,103 @@ public class RussiaStage extends View {
     }
 
 
+    /**
+     * 守护线程异步调用的方法，控制方块组合慢慢下滑
+     */
+    public void go(){
+        if(!running){
+            return;
+        }
+        //判断一下是否能移动
+        modelForCheck.copy(modelForShow);
+        modelForCheck.downOneStep();
+        if(checkCanChange(modelForCheck)){
+            L.d(getClass(), "check", "检测可以向下移动" + modelForCheck.items[0]);
+            modelForShow.downOneStep();
+        }else{
+            L.d(getClass(),"check","检测“不”可以向下移动"+modelForCheck.items[0]);
+            if(checkCanEat(modelForShow)){
+                L.d(getClass(),"check","检测可以被吃掉");
+                if(eat(modelForShow)){
+                    isOver = true;
+                    invalidate();
+                    return;
+                }
+                //吃掉以后，重新初始化showModel
+                mainScore+=remove();
+                modelForShow.init(WIDTH_ITEM_COUNTS);
+                delayTime = NORMAL_DELAY_TIME;
+            }
+        }
+        invalidate();
+    }
+    public boolean isRunning(){
+        return running;
+    }
+
+    public void start() {
+        running = true;
+    }
+
+    /**
+     * 暂停
+     */
+    public void pause(){
+        running = false;
+    }
+    /**
+     * 在非暂停的情况下，左移方块
+     */
+    public void left(){
+        if(!running){
+            return;
+        }
+        modelForCheck.copy(modelForShow);
+        modelForCheck.moveX(-1);
+        if(checkCanChange(modelForCheck)){
+            modelForShow.moveX(-1);
+            invalidate();
+        }
+    }
+
+    /**
+     * 在非暂停的情况下，右移方块
+     */
+    public void right(){
+        if(!running){
+            return;
+        }
+        modelForCheck.copy(modelForShow);
+        modelForCheck.moveX(1);
+        if(checkCanChange(modelForCheck)){
+            modelForShow.moveX(1);
+            invalidate();
+        }
+    }
+
+    /**
+     * 模块组合旋转
+     */
     public void turn() {
-        modelForHorizontal.copy(modelForShow);//拷贝
-        modelForHorizontal.turn();
-        if(checkCanChange(modelForHorizontal)){
+        if(!running){
+            return;
+        }
+        modelForCheck.copy(modelForShow);//拷贝
+        modelForCheck.turn();
+        if(checkCanChange(modelForCheck)){
             modelForShow.turn();
             invalidate();//重绘
         }
     }
 
-
-    public void start() {
-        if (!running) {
-            downThread.start();
-            running = true;
+    /**
+     * 快速下滑
+     */
+    public void downQuickly(){
+        if(!running){
+            return;
         }
-    }
-
-    public void stop() {
-        running = false;
-    }
-
-    public void puase(){
-
-    }
-
-    public void left(){
-        modelForHorizontal.copy(modelForShow);
-        modelForHorizontal.moveX(-1);
-        if(checkCanChange(modelForHorizontal)){
-            modelForShow.moveX(-1);
-            invalidate();
-        }
-    }
-    public void right(){
-        modelForHorizontal.copy(modelForShow);
-        modelForHorizontal.moveX(1);
-        if(checkCanChange(modelForHorizontal)){
-            modelForShow.moveX(1);
-            invalidate();
-        }
+        delayTime = QUICKLY_DELAY_TIME;
     }
 
     /**
@@ -212,7 +279,7 @@ public class RussiaStage extends View {
                 for(int l = 0;l<temp.length;l++){
                     temp[l] = false;
                     SystemClock.sleep(20);
-                    postInvalidate();
+                    invalidate();
                 }
                 for (int k = i;k>1;k--){
                     chessboard[k] = chessboard[k-1];
@@ -255,7 +322,7 @@ public class RussiaStage extends View {
             paint.getTextBounds(over, 0, over.length(), bounds);
             canvas.drawText(over, viewWidth / 2 - bounds.width() / 2, viewHeight / 2 + bounds.height(), paint);
         }
-        paint.setTextSize(20);
+        paint.setTextSize(40);
         Rect scoreBounds = new Rect();
         String score = mainScore + "";
         paint.getTextBounds(score, 0, score.length(),scoreBounds);
@@ -263,37 +330,32 @@ public class RussiaStage extends View {
 
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        downThread.exit();
+        downThread = null;
+    }
+
 
     class DownThread extends Thread {
+
+        private boolean threadRunning = true;
         @Override
         public void run() {
-            while (running&&!isOver) {
-                //判断一下是否能移动
-                modelForDown.copy(modelForShow);
-                modelForDown.downOneStep();
-                if(checkCanChange(modelForDown)){
-                    L.d(getClass(), "check", "检测可以向下移动" + modelForDown.items[0]);
-                    modelForShow.downOneStep();
-                }else{
-                    L.d(getClass(),"check","检测   不  可以向下移动"+modelForDown.items[0]);
-                    if(checkCanEat(modelForShow)){
-                        L.d(getClass(),"check","检测可以被吃掉");
-                        if(eat(modelForShow)){
-                            isOver = true;
-                            running = false;
-                            postInvalidate();
-                            break;
-                        }
-                        //吃掉以后，重新初始化showModel
-                        mainScore+=remove();
-                        modelForShow.init(WIDTH_ITEM_COUNTS);
-                    }
-                }
-                postInvalidate();
-                SystemClock.sleep(400);
+            while (threadRunning){
+                L.d(getClass(),"thread","我发送了GO");
+                controller.sendEmptyMessage(Controller.GO);
+                SystemClock.sleep(delayTime);
             }
         }
+        //结束
+        public void exit(){
+            threadRunning = false;
+        }
     }
+
+
 
 
 }

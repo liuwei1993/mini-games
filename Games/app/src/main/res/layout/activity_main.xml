@@ -1,44 +1,74 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/material_blue_grey_800"
     android:orientation="vertical"
+    android:gravity="bottom"
+    android:paddingBottom="8dp"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="8dp"
-    android:background="@color/material_blue_grey_800"
     tools:context=".MainActivity">
 
     <cn.edu.sdnu.games.view.RussiaStage
         android:id="@+id/rs"
         android:layout_width="300dp"
-        android:layout_height="500dp"
-        android:layout_gravity="center_horizontal"
+        android:layout_height="450dp"
+        android:layout_gravity="center"
         android:padding="2dp" />
+
     <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:orientation="horizontal">
+
         <Button
-            android:text="向左"
+            android:id="@+id/btn_left"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="left"/>
+            android:onClick="start"
+            android:text="开始" />
+
         <Button
-            android:text="旋转"
+            android:id="@+id/btn_turn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:onClick="turn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:text="旋转" />
         <Button
-            android:text="向右"
+            android:id="@+id/btn_right"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="right"/>
+            android:onClick="restart"
+            android:text="重来" />
+
+         />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="开始"
-            android:onClick="start" />
+            android:onClick="left"
+            android:text="向左" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="down"
+            android:text="下滑" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="right"
+            android:text="向右" />
+
     </LinearLayout>
 </LinearLayout>
