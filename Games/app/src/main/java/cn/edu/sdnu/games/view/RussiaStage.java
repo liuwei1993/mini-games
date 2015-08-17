@@ -8,6 +8,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 
 import cn.edu.sdnu.games.bean.Model;
@@ -44,6 +45,7 @@ public class RussiaStage extends View {
 
     private final Model modelForShow = new Model();//专门用来显示的model
     private final Model modelForCheck = new Model();//用于碰撞测试的model
+
     {
         paint = new Paint();
         paint.setAntiAlias(true);
@@ -52,10 +54,13 @@ public class RussiaStage extends View {
         downThread = new DownThread();
         downThread.start();
     }
-    public void init(){
+
+    public void init() {
         chessboard = new boolean[HEIGHT_ITEM_COUNTS][WIDTH_ITEM_COUNTS];
         modelForShow.init(WIDTH_ITEM_COUNTS);
         mainScore = 0;
+        isOver = false;
+        running = true;
         invalidate();//重绘
     }
 
@@ -82,7 +87,6 @@ public class RussiaStage extends View {
     }
 
 
-
     private void drawRect(int x, int y, Canvas canvas) {
         canvas.drawRect(x * itemWidth, y * itemHeight, x * itemWidth + itemWidth, y * itemHeight + itemHeight, paint);
     }
@@ -103,34 +107,37 @@ public class RussiaStage extends View {
     /**
      * 守护线程异步调用的方法，控制方块组合慢慢下滑
      */
-    public void go(){
-        if(!running){
+    public void go() {
+        if (!running) {
             return;
         }
         //判断一下是否能移动
         modelForCheck.copy(modelForShow);
         modelForCheck.downOneStep();
-        if(checkCanChange(modelForCheck)){
+        if (checkCanChange(modelForCheck)) {
             L.d(getClass(), "check", "检测可以向下移动" + modelForCheck.items[0]);
             modelForShow.downOneStep();
-        }else{
-            L.d(getClass(),"check","检测“不”可以向下移动"+modelForCheck.items[0]);
-            if(checkCanEat(modelForShow)){
-                L.d(getClass(),"check","检测可以被吃掉");
-                if(eat(modelForShow)){
+        } else {
+            L.d(getClass(), "check", "检测“不”可以向下移动" + modelForCheck.items[0]);
+            if (checkCanEat(modelForShow)) {
+                L.d(getClass(), "check", "检测可以被吃掉");
+                if (eat(modelForShow)) {
                     isOver = true;
+                    running = false;
                     invalidate();
+                    delayTime = NORMAL_DELAY_TIME;
                     return;
                 }
                 //吃掉以后，重新初始化showModel
-                mainScore+=remove();
+                mainScore += remove();
                 modelForShow.init(WIDTH_ITEM_COUNTS);
                 delayTime = NORMAL_DELAY_TIME;
             }
         }
         invalidate();
     }
-    public boolean isRunning(){
+
+    public boolean isRunning() {
         return running;
     }
 
@@ -141,19 +148,20 @@ public class RussiaStage extends View {
     /**
      * 暂停
      */
-    public void pause(){
+    public void pause() {
         running = false;
     }
+
     /**
      * 在非暂停的情况下，左移方块
      */
-    public void left(){
-        if(!running){
+    public void left() {
+        if (!running) {
             return;
         }
         modelForCheck.copy(modelForShow);
         modelForCheck.moveX(-1);
-        if(checkCanChange(modelForCheck)){
+        if (checkCanChange(modelForCheck)) {
             modelForShow.moveX(-1);
             invalidate();
         }
@@ -162,28 +170,29 @@ public class RussiaStage extends View {
     /**
      * 在非暂停的情况下，右移方块
      */
-    public void right(){
-        if(!running){
+    public void right() {
+        if (!running) {
             return;
         }
         modelForCheck.copy(modelForShow);
         modelForCheck.moveX(1);
-        if(checkCanChange(modelForCheck)){
+        if (checkCanChange(modelForCheck)) {
             modelForShow.moveX(1);
             invalidate();
         }
     }
 
+
     /**
      * 模块组合旋转
      */
     public void turn() {
-        if(!running){
+        if (!running) {
             return;
         }
         modelForCheck.copy(modelForShow);//拷贝
         modelForCheck.turn();
-        if(checkCanChange(modelForCheck)){
+        if (checkCanChange(modelForCheck)) {
             modelForShow.turn();
             invalidate();//重绘
         }
@@ -192,8 +201,8 @@ public class RussiaStage extends View {
     /**
      * 快速下滑
      */
-    public void downQuickly(){
-        if(!running){
+    public void downQuickly() {
+        if (!running) {
             return;
         }
         delayTime = QUICKLY_DELAY_TIME;
@@ -201,16 +210,17 @@ public class RussiaStage extends View {
 
     /**
      * 传入显示的model，判断当前model是否可以被吃掉
+     *
      * @param showModel
      * @return canEat 可以吃返回true，否则返回false
      */
-    private boolean checkCanEat(Model showModel){
-        for(int i=0;i<showModel.items.length;i++){
+    private boolean checkCanEat(Model showModel) {
+        for (int i = 0; i < showModel.items.length; i++) {
             Point p = showModel.items[i];
-            if(p.y+1==HEIGHT_ITEM_COUNTS){
+            if (p.y + 1 == HEIGHT_ITEM_COUNTS) {
                 return true;//可以被吃掉
             }
-            if(p.y+1>=0&&chessboard[p.y+1][p.x]){
+            if (p.y + 1 >= 0 && chessboard[p.y + 1][p.x]) {
                 return true;//可以被吃掉
             }
         }
@@ -220,28 +230,30 @@ public class RussiaStage extends View {
 
     /**
      * 传一个预计变化后的model，检测变化后的model是否合法
+     *
      * @param checkModel 预计变化后的model
      * @return state 可以变化返回true，不能则返回false
      */
-    private boolean checkCanChange(Model checkModel){
-        for(int i=0;i< checkModel.items.length;i++){
-            if(!checkCanChange(checkModel.items[i])){
+    private boolean checkCanChange(Model checkModel) {
+        for (int i = 0; i < checkModel.items.length; i++) {
+            if (!checkCanChange(checkModel.items[i])) {
                 //剩下两个状态一票否决
                 return false;
             }
         }
         return true;
     }
-    private boolean checkCanChange(Point p){
+
+    private boolean checkCanChange(Point p) {
         //检测左右上下边界
-        if(p.x<0||p.x>=WIDTH_ITEM_COUNTS||p.y>=HEIGHT_ITEM_COUNTS){
+        if (p.x < 0 || p.x >= WIDTH_ITEM_COUNTS || p.y >= HEIGHT_ITEM_COUNTS) {
             return false;//返回不能变化
         }
-        if(p.y<0){
+        if (p.y < 0) {
             return true;//如果y值小于0，直接返回true因为棋牌外一定没有方块
         }
         //检测有没有和已经保留在棋盘上的方块有水平方向上的碰撞
-        if(chessboard[p.y][p.x]){
+        if (chessboard[p.y][p.x]) {
             return false;//返回不能变化
         }
         return true;
@@ -249,12 +261,14 @@ public class RussiaStage extends View {
 
     /**
      * 将展示Model吃到棋盘中并显示，如果吃掉的model存在棋盘外的元素，表示game over
+     *
      * @param showModel
      * @return isOver 游戏结束返回true，未结束返回false
      */
-    private boolean eat(Model showModel){
-        for(int i=0;i<showModel.items.length;i++){
-            if(showModel.items[i].y<0){
+    private boolean eat(Model showModel) {
+        L.d(getClass(),"rs","吃掉一个"+showModel);
+        for (int i = 0; i < showModel.items.length; i++) {
+            if (showModel.items[i].y < 0) {
                 return true;
             }
             chessboard[showModel.items[i].y][showModel.items[i].x] = true;
@@ -263,32 +277,32 @@ public class RussiaStage extends View {
     }
 
 
-
-    private int remove(){
+    private int remove() {
         int score = 0;
-        for (int i = 0;i<HEIGHT_ITEM_COUNTS;i++){
+        for (int i = 0; i < HEIGHT_ITEM_COUNTS; i++) {
             boolean canRemove = true;//默认该行可以消除
-            for(int j = 0;j<WIDTH_ITEM_COUNTS;j++){
-                if(!chessboard[i][j]){
+            for (int j = 0; j < WIDTH_ITEM_COUNTS; j++) {
+                if (!chessboard[i][j]) {
                     canRemove = false;//如果该行有一个空元素，则不能消除
                 }
             }
-            if(canRemove){
-                score+=100;
+            if (canRemove) {
+                L.d(getClass(),"rs","消除第"+i+"行");
+                score += 100;
                 boolean[] temp = chessboard[i];
-                for(int l = 0;l<temp.length;l++){
+                for (int l = 0; l < temp.length; l++) {
                     temp[l] = false;
-                    SystemClock.sleep(20);
-                    invalidate();
                 }
-                for (int k = i;k>1;k--){
-                    chessboard[k] = chessboard[k-1];
+                for (int k = i; k > 1; k--) {
+                    chessboard[k] = chessboard[k - 1];
                 }
                 chessboard[0] = temp;
+                invalidate();
             }
         }
         return score;
     }
+
     @Override
     protected void onDraw(Canvas canvas) {
 
@@ -315,7 +329,7 @@ public class RussiaStage extends View {
 
         //如果游戏结束，屏幕中显示Game Over
         paint.setColor(Color.RED);
-        if(isOver){
+        if (isOver) {
             paint.setTextSize(60);
             String over = "Game is Over ! !";
             Rect bounds = new Rect();
@@ -325,10 +339,11 @@ public class RussiaStage extends View {
         paint.setTextSize(40);
         Rect scoreBounds = new Rect();
         String score = mainScore + "";
-        paint.getTextBounds(score, 0, score.length(),scoreBounds);
+        paint.getTextBounds(score, 0, score.length(), scoreBounds);
         canvas.drawText(score, viewWidth - scoreBounds.width() - 5, scoreBounds.height() + 5, paint);
 
     }
+
 
     @Override
     protected void onDetachedFromWindow() {
@@ -338,24 +353,68 @@ public class RussiaStage extends View {
     }
 
 
+    private int lastX, lastY, downX, downY;
+    private long downTime;
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        int eventX = (int) (event.getRawX() / itemWidth);
+        int eventY = (int) (event.getRawY() / itemHeight);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                lastX = eventX;
+                lastY = eventY;
+                downX = eventX;
+                downY = eventY;
+                downTime = System.currentTimeMillis();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                int dx = eventX - lastX;
+                int dy = eventY - lastY;
+                if (Math.abs(dx) > Math.abs(dy) * 2) {
+                    if(dx>0){
+                        right();
+                    }else if(dx<0){
+                        left();
+                    }
+                }
+                lastX = eventX;
+                lastY = eventY;
+                break;
+            case MotionEvent.ACTION_UP:
+                if (eventY - downY > 1 && System.currentTimeMillis() - downTime < 500) {
+                    //认为是下滑
+                    downQuickly();
+                    break;
+                }
+                if (System.currentTimeMillis() - downTime < 100 && eventY - downY < 1) {
+                    //认为是单击
+                    turn();
+                }
+        }
+
+
+        return true;
+    }
+
     class DownThread extends Thread {
 
         private boolean threadRunning = true;
+
         @Override
         public void run() {
-            while (threadRunning){
-                L.d(getClass(),"thread","我发送了GO");
+            while (threadRunning) {
+                L.d(getClass(), "thread", "我发送了GO");
                 controller.sendEmptyMessage(Controller.GO);
                 SystemClock.sleep(delayTime);
             }
         }
+
         //结束
-        public void exit(){
+        public void exit() {
             threadRunning = false;
         }
     }
-
-
 
 
 }
