@@ -5,8 +5,8 @@ package cn.edu.sdnu.wei.hisnake.controller;
  */
 public interface SnakeMoveListener {
     void onMove();
-    void onUp();
-    void onDown();
-    void onLeft();
-    void onRight();
+    void turnUp();
+    void turnDown();
+    void turnLeft();
+    void turnRight();
 }

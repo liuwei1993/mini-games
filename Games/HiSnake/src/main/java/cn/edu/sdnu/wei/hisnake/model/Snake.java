@@ -11,6 +11,7 @@ import java.util.LinkedList;
 
 import cn.edu.sdnu.wei.hisnake.controller.SnakeMoveListener;
 import cn.edu.sdnu.wei.hisnake.utils.Constants;
+import cn.edu.sdnu.wei.hisnake.utils.L;
 
 /**
  * Created by wei on 2015/8/17.
@@ -29,16 +30,34 @@ public class Snake {
     private int currDirection, newDirection;//当前前进方向和下一步的方向
     private SnakeHandler handler = new SnakeHandler();
     //初始化一条蛇
-    public void init(SnakeMoveListener listener) {
+
+
+    public void setListener(SnakeMoveListener listener) {
+        this.listener = listener;
+    }
+
+    public void init() {
         int x = Constants.WIDTH_ITEM_COUNTS / 2;
         int y = Constants.HEIGHT_ITEM_COUNTS / 2;
         body = new LinkedList<>();
         body.add(new Point(x, y));
         body.add(new Point(--x, y));
         body.add(new Point(--x, y));
-        this.listener = listener;
         currDirection = newDirection = RIGHT;//初始化为向右走
         handler.startWork();
+    }
+
+    /**
+     * 启动
+     */
+    public void start(){
+        handler.startWork();
+    }
+    /**
+     * 停止
+     */
+    public void stop(){
+        handler.stopWork();
     }
 
     /**
@@ -64,6 +83,7 @@ public class Snake {
      */
     public void changeDirection(int direction) {
         newDirection = direction;
+        L.d(getClass(), "event", "方向改变" + direction);
     }
 
     private Point oldTail;
@@ -102,13 +122,15 @@ public class Snake {
 
     }
 
+    /**
+     * move之后调用，将丢掉的尾巴拿回来即可。
+     */
     public void eatFood() {
         body.addLast(oldTail);
     }
 
     /**
      * 检测死亡
-     *
      * @return
      */
     public boolean checkDie(Ground ground) {
@@ -121,6 +143,14 @@ public class Snake {
         } else {
             return false;
         }
+    }
+
+    /**
+     * 判断蛇是否活着
+     * @return 活着返回true 否则false
+     */
+    public boolean isAlive(){
+        return isAlive;
     }
 
     /**
@@ -149,11 +179,27 @@ public class Snake {
         return ground.isAtBrick(head.x, head.y);
     }
 
+    /**
+     * 提供给自定义view来绘制自己
+     * @param canvas 画布
+     * @param paint 画笔
+     * @param w 单位方块的宽
+     * @param h 单位方块的高
+     */
     public void drawMe(Canvas canvas, Paint paint, int w, int h) {
         paint.setColor(Color.BLUE);
         for (Point p : body) {
             canvas.drawRect(p.x * w, p.y * h, p.x * w + w, p.y * h + h, paint);
         }
+    }
+
+    /**
+     * 检测有没有得到食物
+     * @param food 食物
+     * @return
+     */
+    public boolean isGetFood(Food food) {
+        return  body.getFirst().equals(food.x,food.y);
     }
 
     class SnakeHandler extends Handler {

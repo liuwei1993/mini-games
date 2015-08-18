@@ -3,6 +3,7 @@ package cn.edu.sdnu.wei.hisnake.controller;
 import cn.edu.sdnu.wei.hisnake.model.Food;
 import cn.edu.sdnu.wei.hisnake.model.Ground;
 import cn.edu.sdnu.wei.hisnake.model.Snake;
+import cn.edu.sdnu.wei.hisnake.utils.U;
 import cn.edu.sdnu.wei.hisnake.view.StageView;
 
 /**
@@ -23,26 +24,42 @@ public class SnakeController implements SnakeMoveListener{
 
     @Override
     public void onMove() {
+
+        //检测有没有吃到食物
+        if(snake.isGetFood(food)){
+            snake.eatFood();
+            stageView.addScore();//加分
+            U.createOneFood(snake,food);
+        }
+
+        //检测有没有死掉
+        if(snake.checkDie(ground)){
+            snake.stop();
+        }
+
+
         stageView.invalidate();
     }
 
     @Override
-    public void onUp() {
+    public void turnUp() {
+        snake.changeDirection(Snake.UP);
+    }
+
+    @Override
+    public void turnDown() {
+        snake.changeDirection(Snake.DOWN);
 
     }
 
     @Override
-    public void onDown() {
-
+    public void turnLeft() {
+        snake.changeDirection(Snake.LEFT);
     }
 
     @Override
-    public void onLeft() {
-
-    }
-
-    @Override
-    public void onRight() {
+    public void turnRight() {
+        snake.changeDirection(Snake.RIGHT);
 
     }
 }
