@@ -11,7 +11,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import cn.edu.sdnu.games.bean.Model;
+import cn.edu.sdnu.games.model.Model;
 import cn.edu.sdnu.games.controller.Controller;
 import cn.edu.sdnu.games.utils.L;
 

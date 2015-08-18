@@ -1,4 +1,4 @@
-package cn.edu.sdnu.games.bean;
+package cn.edu.sdnu.games.model;
 
 import android.graphics.Point;
 
