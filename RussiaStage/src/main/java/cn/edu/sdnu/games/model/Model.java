@@ -6,7 +6,8 @@ import cn.edu.sdnu.games.utils.L;
 import cn.edu.sdnu.games.utils.U;
 
 /**
- * Created by Administrator on 2015/8/11.
+ * 游戏中下落的模块的数据模型
+ * Created by simon liu on 2015/8/11.
  */
 public class Model {
     public final Point[] items = new Point[4];

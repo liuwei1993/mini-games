@@ -7,7 +7,8 @@ import cn.edu.sdnu.wei.hisnake.utils.U;
 import cn.edu.sdnu.wei.hisnake.view.StageView;
 
 /**
- * Created by wei on 2015/8/17.
+ * 蛇的控制器
+ * Created by simon liu on 2015/8/17.
  */
 public class SnakeController implements SnakeMoveListener{
     private Snake snake;
@@ -60,6 +61,5 @@ public class SnakeController implements SnakeMoveListener{
     @Override
     public void turnRight() {
         snake.changeDirection(Snake.RIGHT);
-
     }
 }

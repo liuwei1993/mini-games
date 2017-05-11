@@ -6,7 +6,8 @@ import android.os.Message;
 import cn.edu.sdnu.games.view.RussiaStage;
 
 /**
- * Created by wei on 2015/8/16.
+ * controller
+ * Created by simon liu on 2015/8/16.
  */
 public class Controller extends Handler {
 
@@ -16,6 +17,10 @@ public class Controller extends Handler {
 
     public Controller(RussiaStage rs) {
         this.rs = rs;
+    }
+
+    public void go() {
+        sendEmptyMessage(Controller.GO);
     }
 
     @Override

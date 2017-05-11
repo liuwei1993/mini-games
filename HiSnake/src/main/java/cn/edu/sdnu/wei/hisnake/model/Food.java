@@ -6,7 +6,8 @@ import android.graphics.Paint;
 import android.graphics.Point;
 
 /**
- * Created by wei on 2015/8/17.
+ * 食物的数据模型
+ * Created by simon liu on 2015/8/17.
  */
 public class Food extends Point {
 

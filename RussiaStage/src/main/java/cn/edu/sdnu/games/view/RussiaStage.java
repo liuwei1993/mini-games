@@ -14,11 +14,12 @@ import android.view.View;
 import cn.edu.sdnu.games.model.Model;
 import cn.edu.sdnu.games.controller.Controller;
 import cn.edu.sdnu.games.utils.L;
+import cn.edu.sdnu.games.utils.RectCache;
 
 
 /**
  * 用于展示俄罗斯游戏的舞台
- * Created by Administrator on 2015/8/11.
+ * Created by simon liu on 2015/8/11.
  */
 public class RussiaStage extends View {
 
@@ -211,7 +212,7 @@ public class RussiaStage extends View {
     /**
      * 传入显示的model，判断当前model是否可以被吃掉
      *
-     * @param showModel
+     * @param showModel 检测该模块是否可以吃掉
      * @return canEat 可以吃返回true，否则返回false
      */
     private boolean checkCanEat(Model showModel) {
@@ -253,16 +254,13 @@ public class RussiaStage extends View {
             return true;//如果y值小于0，直接返回true因为棋牌外一定没有方块
         }
         //检测有没有和已经保留在棋盘上的方块有水平方向上的碰撞
-        if (chessboard[p.y][p.x]) {
-            return false;//返回不能变化
-        }
-        return true;
+        return !chessboard[p.y][p.x];
     }
 
     /**
      * 将展示Model吃到棋盘中并显示，如果吃掉的model存在棋盘外的元素，表示game over
      *
-     * @param showModel
+     * @param showModel 将模块“吃掉” 即固定在底板中
      * @return isOver 游戏结束返回true，未结束返回false
      */
     private boolean eat(Model showModel) {
@@ -293,9 +291,8 @@ public class RussiaStage extends View {
                 for (int l = 0; l < temp.length; l++) {
                     temp[l] = false;
                 }
-                for (int k = i; k > 1; k--) {
-                    chessboard[k] = chessboard[k - 1];
-                }
+                //将被消除行以上的所有内容向下平移一个单位（使用System.arraycopy()代替for循环提升性能）
+                System.arraycopy(chessboard, 1, chessboard, 2, i - 1);
                 chessboard[0] = temp;
                 invalidate();
             }
@@ -332,16 +329,17 @@ public class RussiaStage extends View {
         if (isOver) {
             paint.setTextSize(60);
             String over = "Game is Over ! !";
-            Rect bounds = new Rect();
+            Rect bounds = RectCache.getRect();
             paint.getTextBounds(over, 0, over.length(), bounds);
             canvas.drawText(over, viewWidth / 2 - bounds.width() / 2, viewHeight / 2 + bounds.height(), paint);
+            RectCache.cache(bounds);
         }
         paint.setTextSize(40);
-        Rect scoreBounds = new Rect();
+        Rect scoreBounds = RectCache.getRect();
         String score = mainScore + "";
         paint.getTextBounds(score, 0, score.length(), scoreBounds);
         canvas.drawText(score, viewWidth - scoreBounds.width() - 5, scoreBounds.height() + 5, paint);
-
+        RectCache.cache(scoreBounds);
     }
 
 
@@ -353,7 +351,9 @@ public class RussiaStage extends View {
     }
 
 
-    private int lastX, lastY, downX, downY;
+    private int lastX;
+    private int lastY;
+    private int downY;
     private long downTime;
 
     @Override
@@ -364,7 +364,6 @@ public class RussiaStage extends View {
             case MotionEvent.ACTION_DOWN:
                 lastX = eventX;
                 lastY = eventY;
-                downX = eventX;
                 downY = eventY;
                 downTime = System.currentTimeMillis();
                 break;
@@ -397,7 +396,7 @@ public class RussiaStage extends View {
         return true;
     }
 
-    class DownThread extends Thread {
+    private class DownThread extends Thread {
 
         private boolean threadRunning = true;
 
@@ -405,16 +404,15 @@ public class RussiaStage extends View {
         public void run() {
             while (threadRunning) {
                 L.d(getClass(), "thread", "我发送了GO");
-                controller.sendEmptyMessage(Controller.GO);
+                controller.go();
                 SystemClock.sleep(delayTime);
             }
         }
 
         //结束
-        public void exit() {
+        void exit() {
             threadRunning = false;
         }
     }
-
 
 }

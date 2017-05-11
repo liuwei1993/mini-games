@@ -1,7 +1,8 @@
 package cn.edu.sdnu.games.utils;
 
 /**
- * Created by Administrator on 2015/8/12.
+ * 生成随机数
+ * Created by SimonLiu on 2015/8/12.
  */
 public class U {
 

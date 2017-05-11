@@ -3,7 +3,8 @@ package cn.edu.sdnu.games.utils;
 import android.util.Log;
 
 /**
- * Created by Administrator on 2015/8/7.
+ * log 工具类
+ * Created by simon liu on 2015/8/7.
  */
 public class L {
     public static boolean LOG_OPEN = true;
